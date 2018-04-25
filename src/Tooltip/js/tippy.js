@@ -155,6 +155,8 @@ class Tippy {
     if (this.state.destroyed) return
 
     const data = find(this.store, data => data.popper === popper)
+    if (data == null) return
+
     const { tooltip, circle, content } = getInnerElements(popper)
 
     if (!document.body.contains(data.el)) {
@@ -371,6 +373,7 @@ class Tippy {
     if (this.state.destroyed) return
 
     const data = find(this.store, data => data.popper === popper)
+    if (data == null) return
 
     const {
       el,
