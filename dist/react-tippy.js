@@ -16,9 +16,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	function __webpack_require__(moduleId) {
 /******/
 /******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId]) {
+/******/ 		if(installedModules[moduleId])
 /******/ 			return installedModules[moduleId].exports;
-/******/ 		}
+/******/
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
@@ -119,11 +119,12 @@ var Selectors = exports.Selectors = {
   ARROW: '[x-arrow]',
   TOOLTIPPED_EL: '[data-tooltipped]',
   CONTROLLER: '[data-tippy-controller]'
+};
 
-  /**
-  * The default settings applied to each instance
-  */
-};var Defaults = exports.Defaults = {
+/**
+* The default settings applied to each instance
+*/
+var Defaults = exports.Defaults = {
   html: false,
   position: 'top',
   animation: 'shift',
@@ -158,12 +159,13 @@ var Selectors = exports.Selectors = {
   popperOptions: {},
   open: undefined,
   onRequestClose: function onRequestClose() {}
+};
 
-  /**
-  * The keys of the defaults object for reducing down into a new object
-  * Used in `getIndividualSettings()`
-  */
-};var DefaultsKeys = exports.DefaultsKeys = Browser.SUPPORTED && Object.keys(Defaults);
+/**
+* The keys of the defaults object for reducing down into a new object
+* Used in `getIndividualSettings()`
+*/
+var DefaultsKeys = exports.DefaultsKeys = Browser.SUPPORTED && Object.keys(Defaults);
 
 /***/ }),
 /* 1 */
@@ -386,6 +388,8 @@ var _tippy = __webpack_require__(30);
 
 var _tippy2 = _interopRequireDefault(_tippy);
 
+var _globals = __webpack_require__(0);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -393,6 +397,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var stopPortalEvent = function stopPortalEvent(e) {
+  return e.stopPropagation();
+};
 
 var defaultProps = {
   html: null,
@@ -427,8 +435,10 @@ var defaultProps = {
   onRequestClose: function onRequestClose() {},
   sticky: false,
   stickyDuration: 200,
+  tag: 'div',
   touchHold: false,
-  unmountHTMLWhenHide: false
+  unmountHTMLWhenHide: false,
+  zIndex: 9999
 };
 
 var propKeys = Object.keys(defaultProps);
@@ -458,6 +468,10 @@ var Tooltip = function (_Component) {
     _this.showTooltip = _this._showTooltip.bind(_this);
     _this.hideTooltip = _this._hideTooltip.bind(_this);
     _this.updateSettings = _this._updateSettings.bind(_this);
+
+    _this.state = {
+      reactDOMValue: null
+    };
     return _this;
   }
 
@@ -588,11 +602,16 @@ var Tooltip = function (_Component) {
   }, {
     key: '_initTippy',
     value: function _initTippy() {
-      if (typeof window === 'undefined' || typeof document === 'undefined') {
+      var _this3 = this;
+
+      if (typeof window === 'undefined' || typeof document === 'undefined' || !_globals.Browser.SUPPORTED) {
         return;
       }
       if (!this.props.disabled) {
-        this.tooltipDOM.setAttribute('title', this.props.title);
+        if (this.props.title) {
+          this.tooltipDOM.setAttribute('title', this.props.title);
+        }
+
         this.tippy = (0, _tippy2.default)(this.tooltipDOM, {
           disabled: this.props.disabled,
           position: this.props.position,
@@ -621,16 +640,21 @@ var Tooltip = function (_Component) {
           onHidden: this.props.onHidden,
           distance: this.props.distance,
           reactDOM: this.props.html,
+          setReactDOMValue: function setReactDOMValue(newReactDOM) {
+            return _this3.setState({ reactDOMValue: newReactDOM });
+          },
           unmountHTMLWhenHide: this.props.unmountHTMLWhenHide,
           open: this.props.open,
           sticky: this.props.sticky,
           stickyDuration: this.props.stickyDuration,
+          tag: this.props.tag,
           touchHold: this.props.touchHold,
           onRequestClose: this.props.onRequestClose,
           useContext: this.props.useContext,
           reactInstance: this.props.useContext ? this : undefined,
           performance: true,
-          html: this.props.rawTemplate ? this.props.rawTemplate : undefined
+          html: this.props.rawTemplate ? this.props.rawTemplate : undefined,
+          zIndex: this.props.zIndex
         });
         if (this.props.open) {
           this.showTooltip();
@@ -656,22 +680,65 @@ var Tooltip = function (_Component) {
   }, {
     key: 'render',
     value: function render() {
-      var _this3 = this;
+      var _this4 = this;
+
+      var Tag = this.props.tag;
+
 
       return _react2.default.createElement(
-        'div',
-        {
-          ref: function ref(tooltip) {
-            _this3.tooltipDOM = tooltip;
+        _react2.default.Fragment,
+        null,
+        _react2.default.createElement(
+          Tag,
+          {
+            ref: function ref(tooltip) {
+              _this4.tooltipDOM = tooltip;
+            },
+            title: this.props.title,
+            className: this.props.className,
+            tabIndex: this.props.tabIndex,
+            style: _extends({
+              display: 'inline'
+            }, this.props.style)
           },
-          title: this.props.title,
-          className: this.props.className,
-          tabIndex: this.props.tabIndex,
-          style: _extends({
-            display: 'inline'
-          }, this.props.style)
-        },
-        this.props.children
+          this.props.children
+        ),
+        this.state.reactDOMValue && _react2.default.createElement(
+          'div',
+          {
+            onClick: stopPortalEvent,
+            onContextMenu: stopPortalEvent,
+            onDoubleClick: stopPortalEvent,
+            onDrag: stopPortalEvent,
+            onDragEnd: stopPortalEvent,
+            onDragEnter: stopPortalEvent,
+            onDragExit: stopPortalEvent,
+            onDragLeave: stopPortalEvent,
+            onDragOver: stopPortalEvent,
+            onDragStart: stopPortalEvent,
+            onDrop: stopPortalEvent,
+            onMouseDown: stopPortalEvent,
+            onMouseEnter: stopPortalEvent,
+            onMouseLeave: stopPortalEvent,
+            onMouseMove: stopPortalEvent,
+            onMouseOver: stopPortalEvent,
+            onMouseOut: stopPortalEvent,
+            onMouseUp: stopPortalEvent,
+
+            onKeyDown: stopPortalEvent,
+            onKeyPress: stopPortalEvent,
+            onKeyUp: stopPortalEvent,
+
+            onFocus: stopPortalEvent,
+            onBlur: stopPortalEvent,
+
+            onChange: stopPortalEvent,
+            onInput: stopPortalEvent,
+            onInvalid: stopPortalEvent,
+            onSubmit: stopPortalEvent
+          },
+          this.state.reactDOMValue
+        )
       );
     }
   }]);
@@ -725,6 +792,7 @@ function followCursorHandler(e) {
   var refData = (0, _find2.default)(_globals.Store, function (refData) {
     return refData.el === _this;
   });
+  if (!refData) return;
 
   var popper = refData.popper,
       offset = refData.settings.offset;
@@ -977,6 +1045,8 @@ function bindEventListeners() {
       var ref = (0, _find2.default)(_globals.Store, function (ref) {
         return ref.popper === popper;
       });
+      if (!ref) return;
+
       var interactive = ref.settings.interactive;
 
       if (interactive) return;
@@ -986,6 +1056,8 @@ function bindEventListeners() {
       var _ref = (0, _find2.default)(_globals.Store, function (ref) {
         return ref.el === el;
       });
+      if (!_ref) return;
+
       var _ref$settings = _ref.settings,
           hideOnClick = _ref$settings.hideOnClick,
           multiple = _ref$settings.multiple,
@@ -1305,12 +1377,13 @@ function createTooltips(els) {
     var settings = (0, _evaluateSettings2.default)(_this.settings.performance ? _this.settings : (0, _getIndividualSettings2.default)(el, _this.settings));
 
     var html = settings.html,
+        reactDOM = settings.reactDOM,
         trigger = settings.trigger,
         touchHold = settings.touchHold;
 
 
     var title = el.getAttribute('title');
-    if (!title && !html) return a;
+    if (!title && !html && !reactDOM) return a;
 
     el.setAttribute('data-tooltipped', '');
     el.setAttribute('aria-describedby', 'tippy-tooltip-' + id);
@@ -2143,6 +2216,8 @@ var Tippy = function () {
       var data = (0, _find2.default)(this.store, function (data) {
         return data.popper === popper;
       });
+      if (!data) return;
+
       var newSettings = _extends({}, data.settings, _defineProperty({}, name, value));
       data.settings = newSettings;
     }
@@ -2160,13 +2235,15 @@ var Tippy = function () {
       var data = (0, _find2.default)(this.store, function (data) {
         return data.popper === popper;
       });
+      if (!data) return;
 
       var _data$settings = data.settings,
           useContext = _data$settings.useContext,
-          reactInstance = _data$settings.reactInstance;
+          setReactDOMValue = _data$settings.setReactDOMValue;
+
 
       if (useContext) {
-        _reactDom2.default.unstable_renderSubtreeIntoContainer(data.settings.reactInstance, updatedContent, tooltipContent);
+        setReactDOMValue(_reactDom2.default.createPortal(updatedContent, tooltipContent));
       } else {
         _reactDom2.default.render(updatedContent, tooltipContent);
       }
@@ -2202,7 +2279,7 @@ var Tippy = function () {
       this.callbacks.show.call(popper);
 
       // Custom react
-      if (data && data.settings && data.settings.open === false) {
+      if (data.settings && data.settings.open === false) {
         return;
       }
 
@@ -2280,7 +2357,9 @@ var Tippy = function () {
           // Prevents shown() from firing more than once from early transition cancellations
           data._onShownFired = true;
 
-          _this.callbacks.shown.call(popper);
+          if (typeof _this.callbacks.shown === 'function') {
+            _this.callbacks.shown.call(popper);
+          }
         });
       });
     }
@@ -2303,6 +2382,7 @@ var Tippy = function () {
       var data = (0, _find2.default)(this.store, function (data) {
         return data.popper === popper;
       });
+      if (!data) return;
 
       var _getInnerElements2 = (0, _getInnerElements5.default)(popper),
           tooltip = _getInnerElements2.tooltip,
@@ -2313,7 +2393,7 @@ var Tippy = function () {
       // Prevent hide if open
 
 
-      if (data.settings.disabled === false && data.settings.open) {
+      if (data.settings.disabled === false && data && data.settings.open) {
         return;
       }
 
@@ -2390,6 +2470,7 @@ var Tippy = function () {
       var data = (0, _find2.default)(this.store, function (data) {
         return data.popper === popper;
       });
+      if (!data) return;
 
       var _getInnerElements3 = (0, _getInnerElements5.default)(popper),
           content = _getInnerElements3.content;
