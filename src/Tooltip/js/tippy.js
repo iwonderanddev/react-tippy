@@ -112,6 +112,8 @@ class Tippy {
 
   updateSettings(popper, name, value) {
     const data = find(this.store, data => data.popper === popper)
+    if (!data) return;
+
     const newSettings = {
       ...data.settings,
       [name]: value,
@@ -127,16 +129,19 @@ class Tippy {
   updateForReact(popper, updatedContent) {
     const tooltipContent = popper.querySelector(Selectors.CONTENT)
     const data = find(this.store, data => data.popper === popper)
+    if (!data) return;
 
     const {
       useContext,
-      reactInstance,
+      setReactDOMValue,
     } = data.settings;
+
     if (useContext) {
-      ReactDOM.unstable_renderSubtreeIntoContainer(
-        data.settings.reactInstance,
-        updatedContent,
-        tooltipContent,
+      setReactDOMValue(
+        ReactDOM.createPortal(
+          updatedContent,
+          tooltipContent,
+        )
       );
     } else {
       ReactDOM.render(
@@ -167,7 +172,7 @@ class Tippy {
     this.callbacks.show.call(popper)
 
     // Custom react
-    if (data && data.settings && data.settings.open === false) {
+    if (data.settings && data.settings.open === false) {
       return;
     }
 
@@ -249,7 +254,9 @@ class Tippy {
         // Prevents shown() from firing more than once from early transition cancellations
         data._onShownFired = true
 
-        this.callbacks.shown.call(popper)
+        if (typeof this.callbacks.shown === 'function') {
+          this.callbacks.shown.call(popper)
+        }
       })
     })
   }
@@ -265,11 +272,13 @@ class Tippy {
     this.callbacks.hide.call(popper)
 
     const data = find(this.store, data => data.popper === popper)
+    if (!data) return;
+
     const { tooltip, circle, content } = getInnerElements(popper)
 
     // custom react
     // Prevent hide if open
-    if (data.settings.disabled === false && data.settings.open) {
+    if (data.settings.disabled === false && data && data.settings.open) {
       return;
     }
 
@@ -349,6 +358,8 @@ class Tippy {
     if (this.state.destroyed) return
 
     const data = find(this.store, data => data.popper === popper)
+    if (!data) return;
+
     const { content } = getInnerElements(popper)
     const { el, settings: { html } } = data
 
